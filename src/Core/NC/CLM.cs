@@ -128,7 +128,8 @@ public class CLM : MonoBehaviour
             {
                 allCurrentlyExecutedEvents.Clear();
                 //take care of any tags that must be injected into the dialogue before we worry about events.
-                TagManager.Inject(ref dialogue);
+                
+                //TagManager.Inject(ref dialogue); //TODO
 
                 //split the dialogue by the event characters.
                 string[] parts = dialogue.Split('[', ']');
@@ -163,7 +164,7 @@ public class CLM : MonoBehaviour
                     }
 
                     //yield while the dialogue system's architect is constructing the dialogue.
-                    architect = DialogueSystem.instance.currentArchitect;
+                    //architect = DialogueSystem.instance.currentArchitect; //TODO
 
                     while (architect.isConstructing)
                         yield return new WaitForEndOfFrame();
