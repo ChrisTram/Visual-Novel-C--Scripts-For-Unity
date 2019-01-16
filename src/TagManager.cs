@@ -4,6 +4,17 @@ using UnityEngine;
 
 public class TagManager : MonoBehaviour 
 {
+    public static void inject(ref string s)
+    {
+        if (!s.Contains("["))
+            return;
+
+        //replace the mainCharName tag with the actual tag
+        s = s.Replace("[mainCharName]", "Chris"); 
+
+  
+    }
+
 
 	public static string[] SplitByTags(string targetText)
 	{

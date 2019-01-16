@@ -128,6 +128,7 @@ public class NovelController : MonoBehaviour
                         segment.architect.skip = true;
                     else
                         segment.ForceFinish(); //for the finish if the user triggered 
+                    _next = false;
                 }
             }
 
@@ -151,7 +152,7 @@ public class NovelController : MonoBehaviour
 		
 	//ACTIONS
 
-	void HandleAction(string action)
+	public void HandleAction(string action)
 	{
 		print("execute command - " + action);
 		string[] data = action.Split('(',')');

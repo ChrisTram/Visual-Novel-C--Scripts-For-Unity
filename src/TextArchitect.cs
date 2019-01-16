@@ -11,8 +11,8 @@ public class TextArchitect
     private string preText;
     private string targetText;
 
-    private int charactersPerFrame = 1;
-    private float speed = 1f;
+    public int charactersPerFrame = 1;
+    public float speed = 1f;
 
     public bool skip = false;
 
@@ -60,17 +60,19 @@ public class TextArchitect
 
         tmpro.maxVisibleCharacters = vis;
 
+        int cpf = charactersPerFrame;
+
         while (vis < max)
         {
             //allow skipping by increasing the characters per frame and the speed of occurance.
             if (skip)
             {
                 speed = 1;
-                charactersPerFrame = charactersPerFrame < 5 ? 5 : charactersPerFrame + 3;
+                cpf = charactersPerFrame < 5 ? 5 : charactersPerFrame + 3;
             }
 
             //reveal a certain number of characters per frame.
-            while (runsThisFrame < charactersPerFrame)
+            while (runsThisFrame < cpf)
             {
                 vis++;
                 tmpro.maxVisibleCharacters = vis;
@@ -112,5 +114,36 @@ public class TextArchitect
     {
         tmpro.maxVisibleCharacters = tmpro.text.Length;
         Terminate();
+    }
+
+    //Renew this architext by giving it a new target display, overriding the old one. Allows the same architect to be used multiple 
+    //times rather than creating a new one
+
+    public void Renew(string targ, string pre)
+    {
+        targetText = targ;
+        preText = pre;
+
+        skip = false;
+
+        if (isConstructing)
+            DialogueSystem.instance.StopCoroutine(buildProcess);
+
+        buildProcess = DialogueSystem.instance.StartCoroutine(Construction());
+    }
+
+    public void ShowText(string text)
+    {
+        if (isConstructing)
+            DialogueSystem.instance.StopCoroutine(buildProcess);
+
+        targetText = text;
+        tmpro.text = text;
+
+        tmpro.maxVisibleCharacters = tmpro.text.Length;
+
+        //update the target of the dialogue system only if this architect is being used directly by the dialogue system
+        if (tmpro = DialogueSystem.instance.speechText)
+            DialogueSystem.instance.targetSpeech = text;
     }
 }
