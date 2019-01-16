@@ -135,7 +135,11 @@ public class NovelController : MonoBehaviour
 
             yield return new WaitForEndOfFrame();
         }
-
+        //Handling all actions set a the end of the line
+        for(int i = 0; i < line.actions.Count; i++)
+        {
+            HandleAction(line.actions[i]);
+        }
         handlingLine = null;
     }
 
