@@ -4,13 +4,19 @@ using UnityEngine;
 
 public class NovelController : MonoBehaviour 
 {
+    public static NovelController instance;
 	/// <summary> The lines of data loaded directly from a chapter file.	/// </summary>
 	List<string> data = new List<string>();
 	/// <summary> the progress in the current data list.	/// </summary>
 	int progress = 0;
 
-	// Use this for initialization
-	void Start () 
+    private void Awake()
+    {
+        instance = this;
+    }
+
+    // Use this for initialization
+    void Start () 
 	{
 		LoadChapterFile("chapter0_start");
 	}
@@ -21,81 +27,125 @@ public class NovelController : MonoBehaviour
 		//testing
 		if (Input.GetKeyDown(KeyCode.RightArrow))
 		{
-			HandleLine(data[progress]);
-			progress++;
+            Next();
 		}
 	}
 
 	public void LoadChapterFile(string fileName)
 	{
 		data = FileManager.LoadFile(FileManager.savPath + "Resources/Story/" + fileName);
-		progress = 0;
-		cachedLastSpeaker = "";
+        cachedLastSpeaker = "";
+        if (handlingChapterFile != null)
+            StopCoroutine(handlingChapterFile);
+        handlingChapterFile = StartCoroutine(HandlingChapterFile());
 	}
 
-	void HandleLine(string line)
+    bool _next = false;
+    public void Next()
+    {
+        _next = true;
+    }
+    Coroutine handlingChapterFile = null;
+    IEnumerator HandlingChapterFile()
+    {
+        //the progress through the lines in the chapter
+        int progress = 0;
+
+        while(progress < data.Count)
+        {
+            //we need a way of knowing when the payer wants to advance. A next Trigger, that can work from keyboard or mouse.
+            if (_next)
+            {
+                HandleLine(data[progress]);
+                progress++;
+                while(isHandlingLine)
+                {
+                    yield return new WaitForEndOfFrame();
+                }
+            }
+            yield return new WaitForEndOfFrame();
+        }
+    }
+
+
+    void HandleLine(string rawLine)
 	{
-		string[] dialogueAndActions = line.Split('"');
-		//3 objects means there is dialogue.
-		//1 object means there is no dialogue. Only actions.
+        CLM.LINE line = CLM.Interpret(rawLine);
 
-		if (dialogueAndActions.Length == 3)
-		{
-			HandleDialogueFromLine(dialogueAndActions[0], dialogueAndActions[1]);
-			HandleEventsFromLine(dialogueAndActions[2]);
-		}
-		else
-		{
-			HandleEventsFromLine(dialogueAndActions[0]);
-		}
+        StopHandlingLine();
+        handlingLine = StartCoroutine(HandlingLine(line));
 	}
+
+    void StopHandlingLine()
+    {
+        if (isHandlingLine)
+            StopCoroutine(handlingLine);
+        handlingLine = null;
+    }
+    [HideInInspector] public string cachedLastSpeaker = "";
+
+    public bool isHandlingLine { get { return handlingLine != null; } }
+    Coroutine handlingLine = null;
+    IEnumerator HandlingLine(CLM.LINE line) {
+        //next trigger controls also the progression through a line by its segments, so it must be reset
+        _next = false;
+        int lineProgress = 0; //Progress through the segments of a line
+
+        while (lineProgress < line.segments.Count)
+        {
+            _next = false;//reset at the start of cheap loop
+            CLM.LINE.SEGMENT segment = line.segments[lineProgress];
+
+            //always run the first segment automatically
+            if (lineProgress > 0)
+            {
+                if (segment.trigger == CLM.LINE.SEGMENT.TRIGGER.autoDelay)  //if it's a segment that need a yield {
+                {
+                    for (float timer = segment.autoDelay; timer >=0; timer -= Time.deltaTime)
+                    {
+                        yield return new WaitForEndOfFrame();
+                        if (_next)
+                            break; //Because the user must be able to skip a wait time if he wants to
+                    }
+                }
+                else
+                {
+                    while (!_next)
+                        yield return new WaitForEndOfFrame(); //wait until the player trigger the next segment
+                }
+            }
+            _next = false;
+
+            //the segment now needs to build and run.
+            segment.Run();
+ 
+            while(segment.isRunning)
+            {
+                yield return new WaitForEndOfFrame();
+                if(_next)
+                {
+                    if (!segment.architect.skip)
+                        segment.architect.skip = true;
+                    else
+                        segment.ForceFinish(); //for the finish if the user triggered 
+                }
+            }
+
+            lineProgress++;
+
+            yield return new WaitForEndOfFrame();
+        }
+
+        handlingLine = null;
+    }
 
 	/// <summary>
 	/// Used as a fallback when no speaker is given.
 	/// </summary>
-	string cachedLastSpeaker = "";
-	void HandleDialogueFromLine(string dialogueDetails, string dialogue)
-	{
-		string speaker = cachedLastSpeaker;
-		bool additive = dialogueDetails.Contains("+");
 
-		//remove the additive sign from the speaker name area
-		if (additive)
-			dialogueDetails = dialogueDetails.Remove(dialogueDetails.Length-1);
-
-		//if there are still details, there is a speaker.
-		if (dialogueDetails.Length > 0)
-		{
-			//remove the space after the speaker's name if present.
-			if (dialogueDetails[dialogueDetails.Length-1] == ' ')
-				dialogueDetails = dialogueDetails.Remove(dialogueDetails.Length-1);
-
-			speaker = dialogueDetails;
-			cachedLastSpeaker = speaker;
-		}
-
-		//now speak
-		//a narrator should not be retrieved as a character.
-		if (speaker != "narrator")
-		{
-			Character character = CharacterManager.instance.GetCharacter(speaker);
-			character.Say(dialogue, additive);
-		}
-		else
-		{
-			DialogueSystem.instance.Say(dialogue, speaker, additive);
-		}
-	}
+	
 		
-	void HandleEventsFromLine(string events)
-	{
-		string[] actions = events.Split(' ');
-
-		foreach(string action in actions)
-		{
-			HandleAction(action);
-		}
-	}
+	//ACTIONS
 
 	void HandleAction(string action)
 	{
