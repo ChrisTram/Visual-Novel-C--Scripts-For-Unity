@@ -45,6 +45,8 @@ public class NovelController : MonoBehaviour
     {
         _next = true;
     }
+
+    public bool isHandlingChapterFile { get { return handlingChapterFile != null; } }
     Coroutine handlingChapterFile = null;
     IEnumerator HandlingChapterFile()
     {
@@ -65,6 +67,8 @@ public class NovelController : MonoBehaviour
             }
             yield return new WaitForEndOfFrame();
         }
+
+        handlingChapterFile = null;
     }
 
 

@@ -4,7 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class TitleHeader : MonoBehaviour {
+public class TitleHeader : MonoBehaviour
+{
 
     public Image banner;
     public TextMeshProUGUI titleText;
@@ -14,11 +15,11 @@ public class TitleHeader : MonoBehaviour {
     {
         instant,
         slowFade,
-        typeWriter
+        typeWriter,
+        floatingSlowFade
     }
-
     public DISPLAY_METHOD displayMethod = DISPLAY_METHOD.instant;
-    public float fadespeed = 1;
+    public float fadeSpeed = 1;
 
     public void Show(string displayTitle)
     {
@@ -26,6 +27,9 @@ public class TitleHeader : MonoBehaviour {
 
         if (isRevealing)
             StopCoroutine(revealing);
+
+        if (!cachedBannerPos)
+            cachedBannerOriginalPosition = banner.transform.position;
 
         revealing = StartCoroutine(Revealing());
     }
@@ -38,43 +42,78 @@ public class TitleHeader : MonoBehaviour {
 
         banner.enabled = false;
         titleText.enabled = false;
+
+        if (cachedBannerPos)
+            banner.transform.position = cachedBannerOriginalPosition;
     }
 
-    public bool isRevealing {  get { return revealing != null; } }
+    public bool isRevealing { get { return revealing != null; } }
     Coroutine revealing = null;
     IEnumerator Revealing()
     {
         banner.enabled = true;
         titleText.enabled = true;
-        //yield for the current display method
-
-        switch(displayMethod)
+        //yield for the current display method.
+        switch (displayMethod)
         {
             case DISPLAY_METHOD.instant:
                 banner.color = GlobalF.SetAlpha(banner.color, 1);
                 titleText.color = GlobalF.SetAlpha(titleText.color, 1);
                 break;
             case DISPLAY_METHOD.slowFade:
-                banner.color = GlobalF.SetAlpha(banner.color, 0);
-                titleText.color = GlobalF.SetAlpha(titleText.color, 0);
-                while(banner.color.a < 1)
-                {
-                    banner.color = GlobalF.SetAlpha(banner.color, Mathf.MoveTowards(banner.color.a, 1, fadespeed * Time.unscaledDeltaTime));
-                    titleText.color = GlobalF.SetAlpha(titleText.color, banner.color.a);
-                    yield return new WaitForEndOfFrame();
-                }
+                yield return SlowFade();
+                break;
+            case DISPLAY_METHOD.floatingSlowFade:
+                yield return FloatingSlowFade();
                 break;
             case DISPLAY_METHOD.typeWriter:
-                banner.color = GlobalF.SetAlpha(banner.color, 1);
-                titleText.color = GlobalF.SetAlpha(titleText.color, 1);
-                TextArchitect architect = new TextArchitect(titleText, title);
-                while (architect.isConstructing)
-                    yield return new WaitForEndOfFrame();
+                yield return TypeWriter();
                 break;
         }
 
-        //title is displayed now
+        //title is displayed now.
         revealing = null;
     }
 
+    IEnumerator SlowFade()
+    {
+        banner.color = GlobalF.SetAlpha(banner.color, 0);
+        titleText.color = GlobalF.SetAlpha(titleText.color, 0);
+        while (banner.color.a < 1)
+        {
+            banner.color = GlobalF.SetAlpha(banner.color, Mathf.MoveTowards(banner.color.a, 1, fadeSpeed * Time.unscaledDeltaTime));
+            titleText.color = GlobalF.SetAlpha(titleText.color, banner.color.a);
+            yield return new WaitForEndOfFrame();
+        }
+    }
+
+    bool cachedBannerPos = false;
+    Vector3 cachedBannerOriginalPosition = Vector3.zero;
+    IEnumerator FloatingSlowFade()
+    {
+        banner.color = GlobalF.SetAlpha(banner.color, 0);
+        titleText.color = GlobalF.SetAlpha(titleText.color, 0);
+
+        float amount = 25f * ((float)Screen.height / 720f);
+        Vector3 downPos = new Vector3(0, amount, 0);
+        banner.transform.position = cachedBannerOriginalPosition - downPos;
+
+        while (banner.color.a < 1 || banner.transform.position != cachedBannerOriginalPosition)
+        {
+            banner.color = GlobalF.SetAlpha(banner.color, Mathf.MoveTowards(banner.color.a, 1, fadeSpeed * Time.unscaledDeltaTime));
+            titleText.color = GlobalF.SetAlpha(titleText.color, banner.color.a);
+
+            banner.transform.position = Vector3.MoveTowards(banner.transform.position, cachedBannerOriginalPosition, 11 * fadeSpeed * Time.unscaledDeltaTime);
+            yield return new WaitForEndOfFrame();
+        }
+    }
+
+    IEnumerator TypeWriter()
+    {
+        banner.color = GlobalF.SetAlpha(banner.color, 1);
+        titleText.color = GlobalF.SetAlpha(titleText.color, 1);
+        TextArchitect architect = new TextArchitect(titleText, title);
+        while (architect.isConstructing)
+            yield return new WaitForEndOfFrame();
+    }
 }
