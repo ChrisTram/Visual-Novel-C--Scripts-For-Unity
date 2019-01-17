@@ -8,7 +8,8 @@ public class ChoiceScreenTesting : MonoBehaviour
     public string title = "I like...";
     public string[] choices;
 
-    private void Update()
+    // Update is called once per frame
+    void Start()
     {
         StartCoroutine(DynamicStoryExample());
     }
