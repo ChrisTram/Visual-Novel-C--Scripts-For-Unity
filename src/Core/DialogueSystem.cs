@@ -47,8 +47,9 @@ public class DialogueSystem : MonoBehaviour
 	public string targetSpeech = "";
 	Coroutine speaking = null;
 	TextArchitect textArchitect = null;
+    public TextArchitect currentArchitect { get { return textArchitect; } }
 
-	IEnumerator Speaking(string speech, bool additive, string speaker = "")
+    IEnumerator Speaking(string speech, bool additive, string speaker = "")
 	{
 		speechPanel.SetActive(true);
 

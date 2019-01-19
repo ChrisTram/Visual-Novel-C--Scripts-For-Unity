@@ -164,7 +164,7 @@ public class CLM : MonoBehaviour
                     }
 
                     //yield while the dialogue system's architect is constructing the dialogue.
-                    //architect = DialogueSystem.instance.currentArchitect; //TODO
+                    architect = DialogueSystem.instance.currentArchitect; //TODO
 
                     while (architect.isConstructing)
                         yield return new WaitForEndOfFrame();
