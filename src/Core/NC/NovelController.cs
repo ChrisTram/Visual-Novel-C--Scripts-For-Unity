@@ -25,10 +25,10 @@ public class NovelController : MonoBehaviour
     void Update()
     {
         //testing
-        //if (Input.GetKeyDown(KeyCode.RightArrow))
-        //{
-        //    Next();
-        //}
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            Next();
+        }
     }
 
     public void LoadChapterFile(string fileName)
@@ -38,6 +38,9 @@ public class NovelController : MonoBehaviour
         if (handlingChapterFile != null)
             StopCoroutine(handlingChapterFile);
         handlingChapterFile = StartCoroutine(HandlingChapterFile());
+
+        //auto start chapter
+        Next();
     }
 
     bool _next = false;
@@ -48,7 +51,7 @@ public class NovelController : MonoBehaviour
 
     public bool isHandlingChapterFile { get { return handlingChapterFile != null; } }
     Coroutine handlingChapterFile = null;
-    [HideInInspector] private int chapterProgress;
+    [HideInInspector] private int chapterProgress = 0;
     IEnumerator HandlingChapterFile()
     {
         //the progress through the lines in the chapter
@@ -65,11 +68,12 @@ public class NovelController : MonoBehaviour
                 if(line.StartsWith("choice"))
                 {
                     yield return HandlingChoiceLine(line);
+                    chapterProgress++;
                 }
                 //Normal line
                 else
                 {
-                    HandleLine(data[progress]);
+                    HandleLine(line);
                     chapterProgress++;
                     while (isHandlingLine)
                     {
@@ -90,9 +94,9 @@ public class NovelController : MonoBehaviour
         List<string> choices = new List<string>();
         List<string> actions = new List<string>();
 
-        bool gatheringchoice = true;
+        bool gatheringChoices = true;
 
-        while(gatheringchoice)
+        while(gatheringChoices)
         {
             chapterProgress++;
             line = data[chapterProgress];
@@ -102,7 +106,7 @@ public class NovelController : MonoBehaviour
 
             line = line.Replace("   ", ""); //remove the tabs that have become quad spaces.
 
-            if (line != "{")
+            if (line != "}")
             {
                 choices.Add(line.Split('"')[1]);
                 actions.Add(data[chapterProgress + 1].Replace("   ", ""));
@@ -110,7 +114,7 @@ public class NovelController : MonoBehaviour
             }
             else
             {
-                gatheringchoice = false;
+                gatheringChoices = false;
             }
         }
 
@@ -132,7 +136,6 @@ public class NovelController : MonoBehaviour
         {
             Debug.LogError("Invalid choice operation. No choices were found.");
         }
-        chapterProgress++;
     }
 
     void HandleLine(string rawLine)
