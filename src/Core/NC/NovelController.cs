@@ -18,17 +18,17 @@ public class NovelController : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        LoadChapterFile("TestingLineSegmentation");
+        LoadChapterFile("Chapter0_start");
     }
 
     // Update is called once per frame
     void Update()
     {
         //testing
-        if (Input.GetKeyDown(KeyCode.RightArrow))
-        {
-            Next();
-        }
+        //if (Input.GetKeyDown(KeyCode.RightArrow))
+        //{
+        //    Next();
+        //}
     }
 
     public void LoadChapterFile(string fileName)
@@ -48,22 +48,35 @@ public class NovelController : MonoBehaviour
 
     public bool isHandlingChapterFile { get { return handlingChapterFile != null; } }
     Coroutine handlingChapterFile = null;
+    [HideInInspector] private int chapterProgress;
     IEnumerator HandlingChapterFile()
     {
         //the progress through the lines in the chapter
-        int progress = 0;
+        chapterProgress = 0;
 
-        while (progress < data.Count)
+        while (chapterProgress < data.Count)
         {
             //we need a way of knowing when the payer wants to advance. A next Trigger, that can work from keyboard or mouse.
             if (_next)
             {
-                HandleLine(data[progress]);
-                progress++;
-                while (isHandlingLine)
+                string line = data[chapterProgress];
+
+                //Choice
+                if(line.StartsWith("choice"))
                 {
-                    yield return new WaitForEndOfFrame();
+                    yield return HandlingChoiceLine(line);
                 }
+                //Normal line
+                else
+                {
+                    HandleLine(data[progress]);
+                    chapterProgress++;
+                    while (isHandlingLine)
+                    {
+                        yield return new WaitForEndOfFrame();
+                    }
+                }
+
             }
             yield return new WaitForEndOfFrame();
         }
@@ -71,6 +84,56 @@ public class NovelController : MonoBehaviour
         handlingChapterFile = null;
     }
 
+    IEnumerator HandlingChoiceLine(string line)
+    {
+        string title = line.Split('"')[1];
+        List<string> choices = new List<string>();
+        List<string> actions = new List<string>();
+
+        bool gatheringchoice = true;
+
+        while(gatheringchoice)
+        {
+            chapterProgress++;
+            line = data[chapterProgress];
+
+            if (line == "{")
+                continue;
+
+            line = line.Replace("   ", ""); //remove the tabs that have become quad spaces.
+
+            if (line != "{")
+            {
+                choices.Add(line.Split('"')[1]);
+                actions.Add(data[chapterProgress + 1].Replace("   ", ""));
+                chapterProgress++;
+            }
+            else
+            {
+                gatheringchoice = false;
+            }
+        }
+
+        //display choices if 
+        if (choices.Count > 0)
+        {
+            ChoiceScreen.Show(title, choices.ToArray()); yield return new WaitForEndOfFrame();
+            while (ChoiceScreen.isWaitingForChoiceToBeMade)
+                yield return new WaitForEndOfFrame();
+
+            //choice is made
+            string action = actions[ChoiceScreen.lastChoiceMade.index];
+            HandleLine(action);
+
+            while (isHandlingLine)
+                yield return new WaitForEndOfFrame();
+        }
+        else
+        {
+            Debug.LogError("Invalid choice operation. No choices were found.");
+        }
+        chapterProgress++;
+    }
 
     void HandleLine(string rawLine)
     {
