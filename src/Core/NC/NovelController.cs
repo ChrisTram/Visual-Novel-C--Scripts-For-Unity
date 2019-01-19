@@ -301,7 +301,16 @@ public class NovelController : MonoBehaviour
             case ("showScene"):
                 Command_ShowScene(data[1]);
                 break;
+
+            case ("Load"):
+                Command_Load(data[1]);
+                break;
         }
+    }
+
+    void Command_Load(string chapterName)
+    {
+        NovelController.instance.LoadChapterFile(chapterName);
     }
 
     void Command_SetLayerImage(string data, BCFC.LAYER layer)
