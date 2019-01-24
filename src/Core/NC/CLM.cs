@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CLM : MonoBehaviour
-{
+public class CLM : MonoBehaviour {
 
     public static LINE Interpret(string rawLine)
     {
