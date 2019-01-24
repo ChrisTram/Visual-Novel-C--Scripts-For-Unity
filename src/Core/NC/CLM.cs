@@ -128,7 +128,7 @@ public class CLM : MonoBehaviour {
                 allCurrentlyExecutedEvents.Clear();
                 //take care of any tags that must be injected into the dialogue before we worry about events.
                 
-                //TagManager.Inject(ref dialogue); //TODO
+                TagManager.Inject(ref dialogue); //TODO
 
                 //split the dialogue by the event characters.
                 string[] parts = dialogue.Split('[', ']');

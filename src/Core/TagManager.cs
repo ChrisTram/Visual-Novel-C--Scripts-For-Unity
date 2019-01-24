@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class TagManager : MonoBehaviour 
 {
-    public static void inject(ref string s)
+    public static void Inject(ref string s)
     {
         if (!s.Contains("["))
             return;
