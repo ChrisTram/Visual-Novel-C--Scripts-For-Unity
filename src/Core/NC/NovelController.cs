@@ -9,6 +9,9 @@ public class NovelController : MonoBehaviour
     List<string> data = new List<string>();
     /// <summary> the progress in the current data list.	/// </summary>
     int progress = 0;
+    GameObject[] clickables = null;
+
+    bool canNext = true;
 
     private void Awake()
     {
@@ -18,6 +21,8 @@ public class NovelController : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        clickables = GameObject.FindGameObjectsWithTag("Clickable"); //Clickables objects of the scene
+
         LoadTestChapterFile("intro");
         //LoadChapterFile("Chapter0_start");
     }
@@ -318,12 +323,29 @@ public class NovelController : MonoBehaviour
             case ("Load"):
                 Command_Load(data[1]);
                 break;
+
+            case ("clickSw"): //Click switch
+                Command_ClickSwitch();
+                break;
         }
     }
 
     void Command_Load(string chapterName)
     {
         NovelController.instance.LoadChapterFile(chapterName);
+    }
+
+    void Command_ClickSwitch()
+    {
+        //Tout ça migrera dans une autre fonction, pouvant être appelé ailleur
+        NovelController.instance.canNext = (!NovelController.instance.canNext);
+        Debug.Log("Can Next is " + NovelController.instance.canNext);
+
+        foreach (GameObject clickable in NovelController.instance.clickables)
+        {
+            clickable.SetActive(NovelController.instance.canNext);
+        }
+        
     }
 
     void Command_SetLayerImage(string data, BCFC.LAYER layer)
