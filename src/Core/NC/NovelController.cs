@@ -18,7 +18,8 @@ public class NovelController : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        LoadChapterFile("Chapter0_start");
+        LoadTestChapterFile("intro");
+        //LoadChapterFile("Chapter0_start");
     }
 
     // Update is called once per frame
@@ -34,6 +35,18 @@ public class NovelController : MonoBehaviour
     public void LoadChapterFile(string fileName)
     {
         data = FileManager.LoadFile(FileManager.savPath + "Resources/Story/" + fileName);
+        cachedLastSpeaker = "";
+        if (handlingChapterFile != null)
+            StopCoroutine(handlingChapterFile);
+        handlingChapterFile = StartCoroutine(HandlingChapterFile());
+
+        //auto start chapter
+        Next();
+    }
+
+    public void LoadTestChapterFile(string fileName)
+    {
+        data = FileManager.LoadFile("Y:/Nightmare-Walk-Ressources/Levels/" + fileName);
         cachedLastSpeaker = "";
         if (handlingChapterFile != null)
             StopCoroutine(handlingChapterFile);
@@ -104,12 +117,12 @@ public class NovelController : MonoBehaviour
             if (line == "{")
                 continue;
 
-            line = line.Replace("   ", ""); //remove the tabs that have become quad spaces.
+            line = line.Replace("\t", "");//remove the tabs that have become quad spaces.
 
             if (line != "}")
             {
                 choices.Add(line.Split('"')[1]);
-                actions.Add(data[chapterProgress + 1].Replace("   ", ""));
+                actions.Add(data[chapterProgress + 1].Replace("\t", ""));
                 chapterProgress++;
             }
             else
