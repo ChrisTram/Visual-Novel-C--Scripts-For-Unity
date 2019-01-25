@@ -12,7 +12,6 @@ public class NovelController : MonoBehaviour
 
     
     //GameObject[] clickables = null;
-
     bool canNext = true;
 
     private void Awake()
@@ -66,8 +65,7 @@ public class NovelController : MonoBehaviour
     bool _next = false;
     public void Next()
     {
-        if(canNext) 
-            _next = true;
+        _next = true;
     }
 
     public bool isHandlingChapterFile { get { return handlingChapterFile != null; } }
@@ -348,6 +346,7 @@ public class NovelController : MonoBehaviour
     void Command_Block()
     {
         switchCanNext();
+        //switchClickablesButton();
         
     }
 
@@ -355,6 +354,18 @@ public class NovelController : MonoBehaviour
     {
         NovelController.instance.canNext = (!NovelController.instance.canNext);
     }
+    /* Pourra peut être servir
+    public void switchClickablesButton()
+    {
+        NovelController.instance.canNext = (!NovelController.instance.canNext);
+        Debug.Log("Can Next is " + NovelController.instance.canNext);
+
+        foreach (GameObject clickable in NovelController.instance.clickables)
+        {
+            clickable.SetActive(NovelController.instance.canNext);
+        }
+
+    }*/
 
     void Command_SetLayerImage(string data, BCFC.LAYER layer)
     {
