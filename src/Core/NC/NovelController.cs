@@ -9,7 +9,9 @@ public class NovelController : MonoBehaviour
     List<string> data = new List<string>();
     /// <summary> the progress in the current data list.	/// </summary>
     int progress = 0;
-    GameObject[] clickables = null;
+
+    
+    //GameObject[] clickables = null;
 
     bool canNext = true;
 
@@ -21,7 +23,7 @@ public class NovelController : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        clickables = GameObject.FindGameObjectsWithTag("Clickable"); //Clickables objects of the scene
+        //clickables = GameObject.FindGameObjectsWithTag("Clickable"); //Clickable objects of the scene
 
         LoadTestChapterFile("intro");
         //LoadChapterFile("Chapter0_start");
@@ -64,7 +66,8 @@ public class NovelController : MonoBehaviour
     bool _next = false;
     public void Next()
     {
-        _next = true;
+        if(canNext) 
+            _next = true;
     }
 
     public bool isHandlingChapterFile { get { return handlingChapterFile != null; } }
@@ -194,7 +197,14 @@ public class NovelController : MonoBehaviour
                     {
                         yield return new WaitForEndOfFrame();
                         if (_next)
-                            break; //Because the user must be able to skip a wait time if he wants to
+                            break; //Because the user must be able to skip a wait time if he wants to here
+                    }
+                }
+                else if(segment.trigger == CLM.LINE.SEGMENT.TRIGGER.autoDelayBlock) //same, but the user won't be able to skip the wait
+                {
+                    for (float timer = segment.autoDelay; timer >= 0; timer -= Time.deltaTime)
+                    {
+                        yield return new WaitForEndOfFrame();
                     }
                 }
                 else
@@ -324,8 +334,8 @@ public class NovelController : MonoBehaviour
                 Command_Load(data[1]);
                 break;
 
-            case ("clickSw"): //Click switch
-                Command_ClickSwitch();
+            case ("block"): //Block the users interractions by switching activations of the clickables button 
+                Command_Block();
                 break;
         }
     }
@@ -335,17 +345,15 @@ public class NovelController : MonoBehaviour
         NovelController.instance.LoadChapterFile(chapterName);
     }
 
-    void Command_ClickSwitch()
+    void Command_Block()
     {
-        //Tout ça migrera dans une autre fonction, pouvant être appelé ailleur
-        NovelController.instance.canNext = (!NovelController.instance.canNext);
-        Debug.Log("Can Next is " + NovelController.instance.canNext);
-
-        foreach (GameObject clickable in NovelController.instance.clickables)
-        {
-            clickable.SetActive(NovelController.instance.canNext);
-        }
+        switchCanNext();
         
+    }
+
+    public void switchCanNext()
+    {
+        NovelController.instance.canNext = (!NovelController.instance.canNext);
     }
 
     void Command_SetLayerImage(string data, BCFC.LAYER layer)

@@ -26,12 +26,15 @@ public class CLM : MonoBehaviour {
             string[] dialogueAndActions = rawLine.Split('"');
             char actionSplitter = ' ';
             string[] actionsArr = dialogueAndActions.Length == 3 ? dialogueAndActions[2].Split(actionSplitter) : dialogueAndActions[0].Split(actionSplitter);
-
+            
             if (dialogueAndActions.Length == 3)//contains dialogue
             {
                 speaker = dialogueAndActions[0] == "" ? NovelController.instance.cachedLastSpeaker : dialogueAndActions[0];
                 if (speaker[speaker.Length - 1] == ' ')
                     speaker = speaker.Remove(speaker.Length - 1);
+
+
+
 
                 //cache the speaker
                 NovelController.instance.cachedLastSpeaker = speaker;
@@ -82,8 +85,18 @@ public class CLM : MonoBehaviour {
                             segment.trigger = SEGMENT.TRIGGER.autoDelay;
                             segment.autoDelay = float.Parse(commandData[1]);
                             break;
+                        case "wb"://wait and block for set time and clear.
+                            segment.trigger = SEGMENT.TRIGGER.autoDelayBlock;
+                            segment.autoDelay = float.Parse(commandData[1]);
+                            break;
                         case "wa"://wait for set time and append.
                             segment.trigger = SEGMENT.TRIGGER.autoDelay;
+                            segment.autoDelay = float.Parse(commandData[1]);
+                            //appending requires fetching the text of the previous segment to be the pre text
+                            segment.pretext = segments.Count > 0 ? segments[segments.Count - 1].dialogue : "";
+                            break;
+                        case "wba"://wait for set time, block and append.
+                            segment.trigger = SEGMENT.TRIGGER.autoDelayBlock;
                             segment.autoDelay = float.Parse(commandData[1]);
                             //appending requires fetching the text of the previous segment to be the pre text
                             segment.pretext = segments.Count > 0 ? segments[segments.Count - 1].dialogue : "";
@@ -104,7 +117,7 @@ public class CLM : MonoBehaviour {
             public LINE line;
             public string dialogue = "";
             public string pretext = "";
-            public enum TRIGGER { waitClick, waitClickClear, autoDelay }
+            public enum TRIGGER { waitClick, waitClickClear, autoDelay, autoDelayBlock }
             public TRIGGER trigger = TRIGGER.waitClickClear;
 
             public float autoDelay = 0;
@@ -128,7 +141,7 @@ public class CLM : MonoBehaviour {
                 allCurrentlyExecutedEvents.Clear();
                 //take care of any tags that must be injected into the dialogue before we worry about events.
                 
-                TagManager.Inject(ref dialogue); //TODO
+                TagManager.Inject(ref dialogue); 
 
                 //split the dialogue by the event characters.
                 string[] parts = dialogue.Split('[', ']');
