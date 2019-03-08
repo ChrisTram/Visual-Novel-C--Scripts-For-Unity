@@ -63,6 +63,7 @@ public class DialogueSystem : MonoBehaviour
 
 
 		speakerNameText.text = DetermineSpeaker(speaker);//temporary
+
 		speakerNamePane.SetActive(speakerNameText.text != "");
 
 		isWaitingForUserInput = false;
