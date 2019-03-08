@@ -63,14 +63,12 @@ public class DialogueSystem : MonoBehaviour
 
 
 		speakerNameText.text = DetermineSpeaker(speaker);//temporary
+
 		speakerNamePane.SetActive(speakerNameText.text != "");
 
 		isWaitingForUserInput = false;
 
-        if (isClosed)
-            OpenAllRequirementsForDialogueSystemVisibility(true);
-
-        while (textArchitect.isConstructing)
+		while(textArchitect.isConstructing)
 		{
 			if (Input.GetKey(KeyCode.Space))
 				textArchitect.skip = true;
@@ -105,36 +103,8 @@ public class DialogueSystem : MonoBehaviour
 		StopSpeaking ();
 		speechPanel.SetActive (false);
 	}
-    public void OpenAllRequirementsForDialogueSystemVisibility(bool v)
-    {
-        for (int i = 0; i < SpeechPanelRequirements.Length; i++)
-        {
-            SpeechPanelRequirements[i].SetActive(v);
-        }
-    }
 
-    public void Open(string speakerName = "", string speech = "")
-    {
-        if (speakerName == "" && speech == "")
-        {
-            OpenAllRequirementsForDialogueSystemVisibility(false);
-            return;
-        }
-
-        OpenAllRequirementsForDialogueSystemVisibility(true);
-
-        speakerNameText.text = speakerName;
-
-        speakerNamePane.SetActive(speakerName != "");
-
-        speechText.text = speech;
-    }
-
-    public bool isClosed
-    {
-        get { return !speechBox.activeInHierarchy; }
-    }
-    [System.Serializable]
+	[System.Serializable]
 	public class ELEMENTS
 	{
 		/// <summary>
@@ -149,10 +119,4 @@ public class DialogueSystem : MonoBehaviour
 	public TextMeshProUGUI speakerNameText {get{return elements.speakerNameText;}}
 	public TextMeshProUGUI speechText {get{return elements.speechText;}}
 	public GameObject speakerNamePane {get{return elements.speakerNamePane;}}
-
-    /// <summary>
-    /// All objects of this array must be enabled or disabled depending on the status of the dialogue system
-    /// </summary>
-    public GameObject[] SpeechPanelRequirements;
-    public GameObject speechBox;
 }
