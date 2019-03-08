@@ -18,14 +18,102 @@ public class NovelController : MonoBehaviour
     {
         instance = this;
     }
+    int activeGameFileNumber = 0;
+    GAMEFILE activeGameFile = null;
+    string activeChapterFile = "";
 
     // Use this for initialization
     void Start()
     {
         //clickables = GameObject.FindGameObjectsWithTag("Clickable"); //Clickable objects of the scene
 
-        LoadTestChapterFile("intro");
-        //LoadChapterFile("Chapter0_start");
+        LoadTestChapterFile("ChapterX-Fr");
+        //LoadGameFile(0);
+    }
+
+    public void LoadGameFile(int gameFileNumber)
+    {
+        activeGameFileNumber = gameFileNumber;
+
+        string filePath = FileManager.savPath + "Resources/gameFiles/" + gameFileNumber.ToString() + ".txt";
+
+        if (!System.IO.File.Exists(filePath))
+        {
+            FileManager.SaveJSON(filePath, new GAMEFILE());
+        }
+
+        activeGameFile = FileManager.LoadJSON<GAMEFILE>(filePath);
+
+        //Load the file
+        data = FileManager.LoadFile(FileManager.savPath + "Resources/Story/" + activeGameFile.chapterName);
+        activeChapterFile = activeGameFile.chapterName;
+        cachedLastSpeaker = activeGameFile.cachedLastSpeaker;
+
+        DialogueSystem.instance.Open(activeGameFile.currentTextSystemSpeakerNameText, activeGameFile.currentTextSystemDisplayText);
+
+        //Load all characters back into the scene
+        for (int i = 0; i < activeGameFile.charactersInScene.Count; i++)
+        {
+            GAMEFILE.CHARACTERDATA data = activeGameFile.charactersInScene[i];
+            Character character = CharacterManager.instance.CreateCharacter(data.characterName, data.enabled);
+            character.SetBody(data.bodyExpression);
+            character.SetExpression(data.facialExpression);
+            if (data.facingLeft)
+                character.FaceLeft();
+            else
+                character.FaceRight();
+            character.SetPosition(data.position);
+        }
+
+        //Load the layer images back into the scene
+        if (activeGameFile.background != null)
+            BCFC.instance.background.SetTexture(activeGameFile.background);
+        if (activeGameFile.cinematic != null)
+            BCFC.instance.cinematic.SetTexture(activeGameFile.cinematic);
+        if (activeGameFile.foreground != null)
+            BCFC.instance.foreground.SetTexture(activeGameFile.foreground);
+
+        //start the music back up
+        if (activeGameFile.music != null)
+            AudioManager.instance.PlaySong(activeGameFile.music);
+
+        if (handlingChapterFile != null)
+            StopCoroutine(handlingChapterFile);
+        handlingChapterFile = StartCoroutine(HandlingChapterFile());
+
+        chapterProgress = activeGameFile.chapterProgress;
+    }
+
+    public void SaveGameFile()
+    {
+        string filePath = FileManager.savPath + "Resources/gameFiles/" + activeGameFileNumber.ToString() + ".txt";
+
+        activeGameFile.chapterName = activeChapterFile;
+        activeGameFile.chapterProgress = chapterProgress;
+        activeGameFile.cachedLastSpeaker = cachedLastSpeaker;
+
+        activeGameFile.currentTextSystemSpeakerNameText = DialogueSystem.instance.speakerNameText.text;
+        activeGameFile.currentTextSystemDisplayText = DialogueSystem.instance.speechText.text;
+
+        //get all the characters and save their stats.
+        activeGameFile.charactersInScene.Clear();
+        for (int i = 0; i < CharacterManager.instance.characters.Count; i++)
+        {
+            Character character = CharacterManager.instance.characters[i];
+            GAMEFILE.CHARACTERDATA data = new GAMEFILE.CHARACTERDATA(character);
+            activeGameFile.charactersInScene.Add(data);
+        }
+
+        //save the layers to disk
+        BCFC b = BCFC.instance;
+        activeGameFile.background = b.background.activeImage != null ? b.background.activeImage.texture : null;
+        activeGameFile.cinematic = b.cinematic.activeImage != null ? b.cinematic.activeImage.texture : null;
+        activeGameFile.foreground = b.foreground.activeImage != null ? b.foreground.activeImage.texture : null;
+
+        //save the music to disk
+        activeGameFile.music = AudioManager.activeSong != null ? AudioManager.activeSong.clip : null;
+
+        FileManager.SaveJSON(filePath, activeGameFile);
     }
 
     // Update is called once per frame
